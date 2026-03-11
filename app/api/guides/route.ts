@@ -1,21 +1,15 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { store, City } from "@/lib/store";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const city = searchParams.get("city");
+  const city = searchParams.get("city") as City | null;
 
-  const guides = await prisma.guide.findMany({
-    where: {
-      active: true,
-      ...(city ? { city: city as never } : {}),
-    },
-    include: {
-      guidesTours: { include: { tour: true } },
-      _count: { select: { bookings: true } },
-    },
-    orderBy: [{ city: "asc" }, { priority: "asc" }],
-  });
+  const guides = store.getGuides(city ?? undefined).map(g => ({
+    ...g,
+    tourDetails: g.tourIds.map(id => store.getTour(id)).filter(Boolean),
+    bookingCount: store.getGuideBookingCount(g.id),
+  }));
 
   return NextResponse.json(guides);
 }

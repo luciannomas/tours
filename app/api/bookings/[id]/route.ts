@@ -1,27 +1,25 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
-import { findAvailableGuide } from "@/lib/assignment";
-import { sendMessage, buildRescheduleConfirmation } from "@/lib/messaging";
-import { MessageChannel } from "@prisma/client";
+import { store } from "@/lib/store";
+
+function enrich(b: ReturnType<typeof store.getBooking>) {
+  if (!b) return null;
+  return {
+    ...b,
+    tour:     store.getTour(b.tourId),
+    guide:    b.guideId ? store.getGuide(b.guideId) : null,
+    extras:   b.extrasIds.map(id => store.getExtra(id)).filter(Boolean),
+    messages: store.getMessages(b.id),
+  };
+}
 
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const booking = await prisma.booking.findUnique({
-    where: { id },
-    include: {
-      tour:      true,
-      guide:     true,
-      extras:    { include: { extra: true } },
-      messages:  { orderBy: { createdAt: "desc" }, take: 20 },
-      reminders: true,
-    },
-  });
-
-  if (!booking) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json(booking);
+  const b = store.getBooking(id);
+  if (!b) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  return NextResponse.json(enrich(b));
 }
 
 export async function PATCH(
@@ -29,69 +27,40 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const booking = store.getBooking(id);
+  if (!booking) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
   const body = await request.json();
   const { date, time, status } = body;
 
-  const booking = await prisma.booking.findUnique({
-    where: { id },
-    include: { tour: true, guide: true },
-  });
-  if (!booking) return NextResponse.json({ error: "Not found" }, { status: 404 });
-
   // Reschedule flow
   if (date || time) {
-    const newDate = date ? new Date(date) : booking.date;
+    const newDate = date ?? booking.date;
     const newTime = time ?? booking.time;
 
-    const guide = await findAvailableGuide({
-      tourId: booking.tourId,
-      city:   booking.city,
-      date:   newDate,
-      time:   newTime,
-      excludeBookingId: id,
-    });
-
+    const guide = store.findAvailableGuide(booking.tourId, booking.city, newDate, newTime, id);
     if (!guide) {
-      return NextResponse.json(
-        { error: "No guide available for the requested date/time" },
-        { status: 409 }
-      );
+      return NextResponse.json({ error: "No guide available for the requested date/time" }, { status: 409 });
     }
 
-    const updated = await prisma.booking.update({
-      where: { id },
-      data: {
-        date:    newDate,
-        time:    newTime,
-        guideId: guide.id,
-        status:  "RESCHEDULED",
-      },
-      include: { tour: true, guide: true },
+    const updated = store.updateBooking(id, {
+      date: newDate, time: newTime,
+      guideId: guide.id, status: "RESCHEDULED",
     });
 
-    // Send reschedule confirmation
-    await sendMessage({
-      bookingId: id,
-      channel:   MessageChannel.EMAIL,
-      to:        booking.customerEmail,
-      content:   buildRescheduleConfirmation({
-        customerName: booking.customerName,
-        newDate:      newDate.toDateString(),
-        newTime,
-      }),
+    store.addMessage({
+      bookingId: id, channel: "EMAIL",
+      direction: "outbound", sender: "bot@southerncross-demo.com",
+      receiver: booking.customerEmail,
+      content: `✅ Your tour has been rescheduled.\nNew date: ${newDate} at ${newTime}.\nGuide: ${guide.name}`,
     });
 
-    return NextResponse.json(updated);
+    return NextResponse.json(enrich(updated));
   }
 
   // Status update only
-  const updated = await prisma.booking.update({
-    where: { id },
-    data: { ...(status ? { status } : {}) },
-    include: { tour: true, guide: true },
-  });
-
-  return NextResponse.json(updated);
+  const updated = store.updateBooking(id, { ...(status ? { status } : {}) });
+  return NextResponse.json(enrich(updated));
 }
 
 export async function DELETE(
@@ -99,9 +68,6 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  await prisma.booking.update({
-    where: { id },
-    data: { status: "CANCELLED" },
-  });
+  store.updateBooking(id, { status: "CANCELLED" });
   return NextResponse.json({ message: "Booking cancelled" });
 }

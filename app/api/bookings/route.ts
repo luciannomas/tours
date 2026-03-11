@@ -1,109 +1,69 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
-import { assignGuide } from "@/lib/assignment";
-import { sendMessage, buildConfirmationMessage } from "@/lib/messaging";
-import { MessageChannel } from "@prisma/client";
+import { store, Channel, City, Status } from "@/lib/store";
 import { v4 as uuidv4 } from "uuid";
+
+function enrichBooking(b: ReturnType<typeof store.getBooking>) {
+  if (!b) return null;
+  return {
+    ...b,
+    tour:   store.getTour(b.tourId),
+    guide:  b.guideId ? store.getGuide(b.guideId) : null,
+    extras: b.extrasIds.map(id => store.getExtra(id)).filter(Boolean),
+  };
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const status  = searchParams.get("status");
-  const city    = searchParams.get("city");
-  const channel = searchParams.get("channel");
-
-  const bookings = await prisma.booking.findMany({
-    where: {
-      ...(status  ? { status: status as never }  : {}),
-      ...(city    ? { city: city as never }       : {}),
-      ...(channel ? { channel: channel as never } : {}),
-    },
-    include: {
-      tour:   true,
-      guide:  true,
-      extras: { include: { extra: true } },
-    },
-    orderBy: { date: "desc" },
-    take: 100,
+  const bookings = store.getBookings({
+    status:  searchParams.get("status")  as Status  | undefined ?? undefined,
+    city:    searchParams.get("city")    as City    | undefined ?? undefined,
+    channel: searchParams.get("channel") as Channel | undefined ?? undefined,
   });
-
-  return NextResponse.json(bookings);
+  return NextResponse.json(bookings.map(b => enrichBooking(b)));
 }
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const {
-    customerName,
-    customerEmail,
-    customerCountry,
-    channel,
-    tourId,
-    city,
-    date,
-    time,
-    passengers,
-    extrasIds = [],
-  } = body;
+  const { customerName, customerEmail, customerCountry, channel, tourId, city, date, time, passengers, extrasIds = [] } = body;
 
-  // Validate required fields
   if (!customerName || !tourId || !city || !date || !time) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
-  const tour = await prisma.tour.findUnique({ where: { id: tourId } });
+  const tour = store.getTour(tourId);
   if (!tour) return NextResponse.json({ error: "Tour not found" }, { status: 404 });
 
-  // Calculate price
-  const extrasRecords = extrasIds.length > 0
-    ? await prisma.extra.findMany({ where: { id: { in: extrasIds } } })
-    : [];
+  const extrasTotal = extrasIds.reduce((sum: number, id: string) => {
+    const extra = store.getExtra(id);
+    return sum + (extra?.price ?? 0);
+  }, 0);
 
-  const extrasTotal = extrasRecords.reduce((sum: number, e: { price: number }) => sum + e.price, 0);
-  const totalPrice  = tour.price * (passengers ?? 1) + extrasTotal;
-
-  // Create booking
+  const totalPrice    = tour.price * (passengers ?? 1) + extrasTotal;
   const reservationId = `WEB-${uuidv4().substring(0, 8).toUpperCase()}`;
 
-  const booking = await prisma.booking.create({
-    data: {
-      reservationId,
-      customerName,
-      customerEmail,
-      customerCountry,
-      channel: channel ?? "WEB",
-      tourId,
-      city,
-      date: new Date(date),
-      time,
-      passengers: passengers ?? 1,
-      totalPrice,
-      status: "PENDING",
-      extras: {
-        create: extrasIds.map((extraId: string) => ({ extraId })),
-      },
-    },
-    include: { tour: true, extras: { include: { extra: true } } },
+  // Find available guide
+  const guide = store.findAvailableGuide(tourId, city as City, date, time);
+
+  const booking = store.createBooking({
+    reservationId, customerName,
+    customerEmail: customerEmail ?? "",
+    customerCountry: customerCountry ?? "",
+    channel: (channel ?? "WEB") as Channel,
+    tourId, guideId: guide?.id ?? null,
+    city: city as City, date, time,
+    passengers: passengers ?? 1, totalPrice,
+    status: guide ? "CONFIRMED" : "PENDING",
+    extrasIds, notes: "",
   });
 
-  // Auto-assign guide
-  const guide = await assignGuide(booking.id);
-
-  // Send confirmation
+  // Log confirmation message
   if (customerEmail) {
-    await sendMessage({
-      bookingId: booking.id,
-      channel: MessageChannel.EMAIL,
-      to: customerEmail,
-      content: buildConfirmationMessage({
-        customerName,
-        tourName: tour.name,
-        date: new Date(date).toDateString(),
-        time,
-        guideName: guide?.name ?? "TBD",
-        totalPrice,
-        reservationId,
-      }),
+    store.addMessage({
+      bookingId: booking.id, channel: "EMAIL",
+      direction: "outbound", sender: "bot@southerncross-demo.com", receiver: customerEmail,
+      content: `✅ Booking Confirmed! Hi ${customerName}! Tour: ${tour.name} · ${date} ${time} · Guide: ${guide?.name ?? "TBD"} · $${totalPrice} AUD · Ref: ${reservationId}`,
     });
   }
 
-  return NextResponse.json({ ...booking, guide }, { status: 201 });
+  return NextResponse.json(enrichBooking(booking), { status: 201 });
 }

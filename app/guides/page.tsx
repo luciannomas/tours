@@ -10,8 +10,8 @@ interface Guide {
   priority: number;
   languages: string[];
   active: boolean;
-  _count: { bookings: number };
-  guidesTours: { tour: { name: string } }[];
+  bookingCount: number;
+  tourDetails: { id: string; name: string }[];
 }
 
 const CITY_EMOJI: Record<string, string> = {
@@ -79,10 +79,10 @@ export default function GuidesPage() {
                 ))}
               </div>
               <div className="text-xs text-slate-500 mb-2">
-                <strong className="text-sky-600">{g._count.bookings}</strong> total bookings
+                <strong className="text-sky-600">{g.bookingCount}</strong> total bookings
               </div>
               <div className="text-xs text-slate-400">
-                Tours: {g.guidesTours.map((t) => t.tour.name).join(", ") || "None assigned"}
+                Tours: {g.tourDetails?.map((t) => t.name).join(", ") || "None assigned"}
               </div>
             </div>
           ))}

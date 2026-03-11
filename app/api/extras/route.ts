@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { store } from "@/lib/store";
 
 export async function GET() {
-  const extras = await prisma.extra.findMany({ where: { active: true } });
-  return NextResponse.json(extras);
+  return NextResponse.json(store.getExtras());
 }
