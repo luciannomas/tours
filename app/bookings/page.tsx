@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useToast } from "@/components/ToastProvider";
 
 interface Booking {
   id: string;
@@ -32,6 +33,7 @@ export default function BookingsPage() {
   const [loading,  setLoading]  = useState(true);
   const [filter,   setFilter]   = useState({ status: "", city: "", channel: "" });
   const [selected, setSelected] = useState<Booking | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -50,6 +52,7 @@ export default function BookingsPage() {
     await fetch(`/api/bookings/${id}`, { method: "DELETE" });
     setBookings((prev) => prev.map((b) => b.id === id ? { ...b, status: "CANCELLED" } : b));
     if (selected?.id === id) setSelected(null);
+    toast("Booking cancelled successfully", "success");
   };
 
   return (
