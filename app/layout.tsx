@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Link from "next/link";
 import { ToastProvider } from "@/components/ToastProvider";
+import { OnboardingGuide, OnboardingReopenButton } from "@/components/OnboardingGuide";
 
 export const metadata: Metadata = {
   title: "Southern Cross Adventure Tours – Admin",
@@ -13,6 +14,7 @@ const navLinks = [
   { href: "/dashboard", label: "📊 Dashboard" },
   { href: "/bookings",  label: "📅 Bookings" },
   { href: "/guides",    label: "👤 Guides" },
+  { href: "/chat",      label: "🤖 AI Agent" },
 ];
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -20,6 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className="min-h-screen flex flex-col">
         <ToastProvider>
+          <OnboardingGuide />
           <header className="bg-gradient-to-r from-sky-700 to-sky-800 text-white shadow-md">
             <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
               <Link href="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
@@ -48,6 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </main>
           <footer className="bg-sky-900 text-sky-300 text-center text-xs py-3">
             Southern Cross Adventure Tours – AI Demo · Sydney · Melbourne · Gold Coast
+            &nbsp;·&nbsp; <OnboardingReopenButton />
           </footer>
         </ToastProvider>
       </body>
