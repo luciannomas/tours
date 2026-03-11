@@ -1,0 +1,234 @@
+🧠 PROYECTO DEMO – AGENTE IA PARA TOURS (DATOS FICTICIOS)
+
+🏢 Empresa (ficticia)
+
+Nombre comercial:
+🚙 Southern Cross Adventure Tours
+
+País: Australia
+Ciudades: Sydney, Melbourne, Gold Coast
+
+Web (WordPress):
+https://www.southerncross-adventures-demo.com
+
+Email principal:
+bookings@southerncross-demo.com
+
+WhatsApp Business:
++61 4 12 345 678
+
+Instagram:
+@southerncross.adventures.demo
+
+⸻
+
+🗺️ Tours (ficticios)
+
+Sydney
+    1.    Sydney Icons Drive – 1h – 180 AUD
+    2.    Sydney Sunset Harbour Tour – 1h30 – 320 AUD
+    3.    Grand Sydney Discovery – 3h – 420 AUD
+
+Melbourne
+    4.    Melbourne Cultural Highlights Tour – 2h – 290 AUD
+
+Gold Coast
+    5.    Coastal Scenic Experience – 3h – 480 AUD
+
+Capacidad:
+🚘 1 vehículo = 1 guía + 3 pasajeros
+
+Extras ficticios:
+    •    Hotel pickup: +60 AUD
+    •    Professional photoshoot: +250 AUD
+    •    Local wine & snacks pack: +45 AUD
+
+⸻
+
+👥 Guías (12 guías ficticios)
+Guía    Ciudad    Email    Idiomas
+Jack Wilson    Sydney    jack@southerncross-demo.com    EN
+Emily Carter    Sydney    emily@southerncross-demo.com    EN
+Liam Thompson    Sydney    liam@southerncross-demo.com    EN
+Olivia Brown    Melbourne    olivia@southerncross-demo.com    EN
+Noah Harris    Gold Coast    noah@southerncross-demo.com    EN
++ 7 más    —    —    —
+
+Cada guía tiene:
+    •    Google Calendar propio
+    •    Prioridad configurable
+    •    Tours habilitados específicos
+
+⸻
+
+📩 Flujo de reservas (DEMO)
+
+Canales simulados
+    •    Airbnb (Host API – sandbox)
+    •    Viator (Partner API – sandbox)
+    •    Web WordPress (WP Travel plugin)
+    •    Email (Gmail IMAP)
+
+Ejemplo de reserva (ficticia)
+{
+  "customer_name": "Sarah Mitchell",
+  "country": "Australia",
+  "email": "sarah.mitchell@email-demo.com",
+  "tour": "Sydney Icons Drive",
+  "city": "Sydney",
+  "date": "2026-04-18",
+  "time": "15:00",
+  "passengers": 3,
+  "extras": ["Hotel Pickup", "Photoshoot"],
+  "price": 490,
+  "channel": "Viator",
+  "reservation_id": "VIATOR-DEMO-77542"
+}
+
+⸻
+
+📊 Google Sheets (estructura ficticia)
+
+Sheet 1 – MASTER
+    •    Reservation ID
+    •    Cliente
+    •    Canal
+    •    Ciudad
+    •    Tour
+    •    Fecha
+    •    Hora
+    •    Guía asignado
+    •    Precio (AUD)
+    •    Extras
+    •    Estado
+
+Sheet 2–13 – Por guía
+
+Ejemplo: GUIDE_JACK_WILSON
+    •    Fecha
+    •    Hora
+    •    Tour
+    •    Cliente
+    •    Canal
+    •    Ingresos
+
+⸻
+
+📆 Calendarios
+    •    Calendar Central: Southern Cross – All Tours
+    •    Calendarios individuales: 1 por guía
+    •    Sincronización bidireccional:
+    •    Cambio en Calendar → Sheet
+    •    Cambio en Sheet → Calendar
+
+⸻
+
+🤖 Mensajería automática (DEMO)
+
+Canales activos
+    •    Airbnb Chat
+    •    WhatsApp Business API
+    •    Instagram Messaging
+    •    Email
+    •    Mensajes Web
+
+Ejemplos de FAQs que responde el agente
+
+Q: Do you accept dogs?
+A:
+Small pets are welcome as long as they are in a carrier. Large dogs are not allowed.
+
+Q: What happens if it rains?
+A:
+The tour runs as planned. Our vehicles are fully covered and weather-ready.
+
+Q: Where does the tour start?
+A:
+The exact meeting point depends on the selected tour and will be confirmed after booking.
+
+⸻
+
+🔄 Cambios de fecha (flujo ficticio)
+    1.    Cliente escribe:
+
+Can I move my tour to April 20th at 10am?
+
+    2.    IA:
+
+    •    Verifica disponibilidad en Google Calendar
+    •    Encuentra guía disponible
+    •    Actualiza:
+    •    Google Calendar
+    •    Google Sheet
+    •    Plataforma (Airbnb / Viator / Web)
+
+    3.    Respuesta automática:
+
+✅ Your tour has been successfully rescheduled.
+New date: April 20th at 10:00 AM.
+
+⸻
+
+🔔 Recordatorios automáticos
+
+Día del tour – 08:00
+
+Hi Sarah! 👋
+This is a reminder for your Sydney Icons Drive today at 15:00.
+Your guide Jack will meet you at the confirmed meeting point.
+
+Post-tour – +1h
+
+We hope you enjoyed your experience 💙
+Would you mind leaving us a review?
+👉 https://g.page/r/southerncross-demo/review
+
+⸻
+
+📈 Dashboard mensual (ficticio)
+
+Ejemplo – Abril 2026
+    •    Total tours: 142
+    •    Ingresos totales: 58,900 AUD
+    •    Airbnb: 48%
+    •    Web directa: 34%
+    •    Viator: 18%
+    •    Extras vendidos:
+    •    Pickup: 53
+    •    Photoshoot: 31
+    •    Top guía: Jack Wilson – 26 tours
+
+⸻
+
+🔌 APIs simuladas usadas en demo
+    •    Airbnb Host API (sandbox)
+    •    Viator Partner API (sandbox)
+    •    WhatsApp Cloud API
+    •    Instagram Messaging API
+    •    Google Calendar API
+    •    Google Sheets API
+    •    Gmail IMAP
+    •    Webhooks custom (Node / Python)
+
+⸻
+
+🧱 Stack técnico (ejemplo demo)
+    •    Backend: Python + FastAPI
+    •    Agent logic: LLM + RAG (FAQs + policies)
+    •    DB: PostgreSQL
+    •    Automation: Webhooks + cron jobs
+    •    Hosting: GCP / Docker
+    •    Front panel: Admin dashboard (basic)
+
+⸻
+
+🎯 Objetivo de la demo
+
+Que el freelancer pueda demostrar:
+    •    Automatización real end-to-end
+    •    Manejo de múltiples APIs
+    •    Gestión de estados
+    •    Lógica de asignación
+    •    Mensajería inteligente
+    •    Dashboards
+    •    Arquitectura limpia

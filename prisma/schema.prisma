@@ -1,0 +1,151 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum City {
+  SYDNEY
+  MELBOURNE
+  GOLD_COAST
+}
+
+enum Channel {
+  AIRBNB
+  VIATOR
+  WEB
+  EMAIL
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  RESCHEDULED
+  CANCELLED
+  COMPLETED
+}
+
+enum MessageChannel {
+  WHATSAPP
+  INSTAGRAM
+  EMAIL
+  AIRBNB_CHAT
+  WEB
+}
+
+model Tour {
+  id          String    @id @default(cuid())
+  name        String
+  city        City
+  duration    String
+  price       Float
+  description String?
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+
+  bookings    Booking[]
+  guidesTours GuideTour[]
+}
+
+model Extra {
+  id       String  @id @default(cuid())
+  name     String
+  price    Float
+  active   Boolean @default(true)
+
+  bookingExtras BookingExtra[]
+}
+
+model Guide {
+  id             String    @id @default(cuid())
+  name           String
+  email          String    @unique
+  city           City
+  languages      String[]
+  priority       Int       @default(1)
+  calendarId     String?
+  active         Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+
+  bookings       Booking[]
+  guidesTours    GuideTour[]
+}
+
+model GuideTour {
+  guideId String
+  tourId  String
+  guide   Guide  @relation(fields: [guideId], references: [id])
+  tour    Tour   @relation(fields: [tourId], references: [id])
+
+  @@id([guideId, tourId])
+}
+
+model Booking {
+  id            String        @id @default(cuid())
+  reservationId String        @unique
+  customerName  String
+  customerEmail String
+  customerCountry String?
+  channel       Channel
+  tourId        String
+  guideId       String?
+  city          City
+  date          DateTime
+  time          String
+  passengers    Int           @default(1)
+  totalPrice    Float
+  status        BookingStatus @default(PENDING)
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  tour          Tour          @relation(fields: [tourId], references: [id])
+  guide         Guide?        @relation(fields: [guideId], references: [id])
+  extras        BookingExtra[]
+  messages      Message[]
+  reminders     Reminder[]
+}
+
+model BookingExtra {
+  bookingId String
+  extraId   String
+  booking   Booking @relation(fields: [bookingId], references: [id])
+  extra     Extra   @relation(fields: [extraId], references: [id])
+
+  @@id([bookingId, extraId])
+}
+
+model Message {
+  id        String         @id @default(cuid())
+  bookingId String?
+  channel   MessageChannel
+  direction String         // "inbound" | "outbound"
+  content   String
+  sender    String?
+  receiver  String?
+  createdAt DateTime       @default(now())
+
+  booking   Booking?       @relation(fields: [bookingId], references: [id])
+}
+
+model Reminder {
+  id        String   @id @default(cuid())
+  bookingId String
+  type      String   // "day_of" | "post_tour"
+  sentAt    DateTime?
+  scheduled DateTime
+  content   String
+  channel   String
+
+  booking   Booking  @relation(fields: [bookingId], references: [id])
+}
+
+model FaqEntry {
+  id       String @id @default(cuid())
+  question String
+  answer   String
+  tags     String[]
+}
